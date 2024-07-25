@@ -105,7 +105,7 @@ class TestLoggingMixin(APITestCase):
         log = APIRequestLog.objects.first()
         self.assertEqual(log.remote_addr, "127.0.0.8")
 
-    def test_log_ip_xforwarded_list_with_unkown_ip(self):
+    def test_log_ip_xforwarded_list_with_unknown_ip(self):
         request = APIRequestFactory().get("/logging")
         request.META["HTTP_X_FORWARDED_FOR"] = "unknown, 128.1.1.9"
 
