@@ -111,11 +111,8 @@ class BaseLoggingMixin(object):
 
     def _get_ip_address(self, request):
         """Get the remote ip address the request was generated from."""
-        ipaddr = request.META.get("HTTP_X_FORWARDED_FOR", None)
-        if ipaddr:
-            ipaddr = ipaddr.split(",")[0]
-        else:
-            ipaddr = request.META.get("REMOTE_ADDR", "").split(",")[0]
+        raw_possibles = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")
+        raw_possibles += request.META.get("REMOTE_ADDR", "").split(",")
 
         # Account for IPv4 and IPv6 addresses, each possibly with port appended. Possibilities are:
         # <ipv4 address>
@@ -123,15 +120,21 @@ class BaseLoggingMixin(object):
         # <ipv4 address>:port
         # [<ipv6 address>]:port
         # Note that ipv6 addresses are colon separated hex numbers
-        possibles = (ipaddr.lstrip("[").split("]")[0], ipaddr.split(":")[0])
-
+        possibles = [
+            i.strip()
+            for sublist in [
+                (ipaddr.lstrip("[").split("]")[0], ipaddr.split(":")[0])
+                for ipaddr in raw_possibles
+            ]
+            for i in sublist
+        ]
         for addr in possibles:
             try:
                 return str(ipaddress.ip_address(addr))
             except ValueError:
                 pass
 
-        return ipaddr
+        return raw_possibles[0]
 
     def _get_view_name(self, request):
         """Get view name."""
