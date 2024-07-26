@@ -120,14 +120,18 @@ class BaseLoggingMixin(object):
         # <ipv4 address>:port
         # [<ipv6 address>]:port
         # Note that ipv6 addresses are colon separated hex numbers
-        possibles = [
-            i.strip()
-            for sublist in [
-                (ipaddr.lstrip("[").split("]")[0], ipaddr.split(":")[0])
-                for ipaddr in raw_possibles
-            ]
-            for i in sublist
-        ]
+        raw_possibles = [addr.strip() for addr in raw_possibles]
+        possibles = []
+        for possible_addr in raw_possibles:
+            if '[' in possible_addr:
+                # IPv6 with port
+                possibles.append(possible_addr.rsplit(":", 1)[0].strip("[]"))
+            elif possible_addr.count(":") == 1:
+                # IPv4 with port
+                possibles.append(possible_addr.split(":")[0])
+            else:
+                # IPv4/IPv6 without port and others
+                possibles.append(possible_addr)
         for addr in possibles:
             try:
                 return str(ipaddress.ip_address(addr))
